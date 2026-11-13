@@ -8,6 +8,8 @@ public class CatanApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(CatanApplication.class, args);
+		
 	}
 
 }
+

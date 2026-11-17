@@ -1,37 +1,36 @@
 package com.example.catan.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import com.example.catan.dto.Dtos.*;
+import com.example.catan.service.PartidaService;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.catan.dto.NovaPartidaRequest;
-import com.example.catan.service.PartidaService;
+import java.util.List;
 
 @RestController
 @RequestMapping("/partida")
 public class PartidaController {
 
-    @Autowired
-    private PartidaService service;
+    private final PartidaService partidaService; // Faltan los .service
 
-    // 1. GET localhost:8080/partida/1/tauler
-    // Mostra els hexagons de la partida amb terreny, número, lladre i construccions adjacents
+    public PartidaController(PartidaService partidaService) {
+        this.partidaService = partidaService;
+    }
+
+    /** Hexagons de la partida amb terreny, numero, lladre i construccions adjacents. */
     @GetMapping("/{idPartida}/tauler")
-    public ResponseEntity<?> mostrarTauler(@PathVariable int idPartida) {
-        return service.mostrarTauler(idPartida);
+    public List<HexagonTaulerDTO> tauler(@PathVariable("idPartida") Integer idPartida) {
+        return partidaService.tauler(idPartida);
     }
 
-    // 2. POST localhost:8080/partida
-    // Inicialitza una nova partida rebent un JSON amb els noms dels jugadors i (opcional) puntsPerGuanyar
+    /** Inicialitza una partida: {"jugadors":["Anna","Pau"], "puntsPerGuanyar":10}. */
     @PostMapping
-    public ResponseEntity<?> iniciarPartida(@RequestBody NovaPartidaRequest request) {
-        return service.iniciarPartida(request);
+    public PartidaDTO iniciar(@RequestBody IniciarPartidaRequest request) { // Faltan los DTO
+        return partidaService.iniciar(request);
     }
 
-    // 3. POST localhost:8080/partida/1/daus
-    // Tira els daus i executa la producció de recursos
+    /** Tira els daus i executa la produccio. */
     @PostMapping("/{idPartida}/daus")
-    public ResponseEntity<?> tirarDaus(@PathVariable int idPartida) {
-        return service.tirarDaus(idPartida);
+    public TiradaDTO tirarDaus(@PathVariable("idPartida") Integer idPartida) {
+        return partidaService.tirarDaus(idPartida);
     }
 }

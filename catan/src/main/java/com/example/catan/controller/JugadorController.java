@@ -1,36 +1,40 @@
-package com.example.catan.controller;
+package cat.catan.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.catan.dto.Dtos.JugadorRecursosDTO;
+import com.example.catan.model.TipusConstruccio;
+import com.example.catan.service.JugadorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import com.example.catan.service.JugadorService;
 
 @RestController
 @RequestMapping("/jugador")
 public class JugadorController {
 
-    @Autowired
-    private JugadorService service;
+    private final JugadorService jugadorService; // Faltan los DTO y los Service
 
-    // GET localhost:8080/jugador/1/recursos
+    public JugadorController(JugadorService jugadorService) {
+        this.jugadorService = jugadorService;
+    }
+
+    /** Jugador amb el seu inventari; 404 si no existeix. */
     @GetMapping("/{idJugador}/recursos")
-    public ResponseEntity<?> mostrarRecursos(@PathVariable int idJugador) {
-        return service.mostrarRecursos(idJugador);
+    public ResponseEntity<JugadorRecursosDTO> recursos(@PathVariable("idJugador") Integer idJugador) {
+        return jugadorService.recursos(idJugador)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // POST localhost:8080/jugador/1/construir?tipus=POBLAT&posicio=12
+    /** Construeix CARRETERA, POBLAT o CIUTAT; posicio = id de l'aresta o del vertex. */
     @PostMapping("/{idJugador}/construir")
-    public ResponseEntity<String> construir(
-            @PathVariable int idJugador,
-            @RequestParam String tipus,
-            @RequestParam int posicio) {
-        return service.construir(idJugador, tipus, posicio);
+    public String construir(@PathVariable("idJugador") Integer idJugador,
+                            @RequestParam("tipus") TipusConstruccio tipus,
+                            @RequestParam("posicio") Integer posicio) {
+        return jugadorService.construir(idJugador, tipus, posicio);
     }
 
-    // POST localhost:8080/jugador/1/passar
+    /** Passa el torn. */
     @PostMapping("/{idJugador}/passar")
-    public ResponseEntity<String> passarTorn(@PathVariable int idJugador) {
-        return service.passarTorn(idJugador);
+    public String passar(@PathVariable("idJugador") Integer idJugador) {
+        return jugadorService.passarTorn(idJugador);
     }
 }

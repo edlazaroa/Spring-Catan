@@ -1,7 +1,7 @@
-package cat.catan.controller;
+package com.example.catan.controller;
 
 import com.example.catan.dto.Dtos.JugadorRecursosDTO;
-import com.example.catan.model.TipusConstruccio;
+import com.example.catan.model.Construccio;
 import com.example.catan.service.JugadorService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

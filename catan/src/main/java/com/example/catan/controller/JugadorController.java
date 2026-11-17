@@ -27,7 +27,7 @@ public class JugadorController {
     /** Construeix CARRETERA, POBLAT o CIUTAT; posicio = id de l'aresta o del vertex. */
     @PostMapping("/{idJugador}/construir")
     public String construir(@PathVariable("idJugador") Integer idJugador,
-                            @RequestParam("tipus") TipusConstruccio tipus,
+                            @RequestParam("tipus") Construccio tipus,
                             @RequestParam("posicio") Integer posicio) {
         return jugadorService.construir(idJugador, tipus, posicio);
     }

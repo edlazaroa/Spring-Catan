@@ -60,7 +60,7 @@ public class JugadorService {
     // POST /jugador/{id}/construir
     // =====================================================================
     @Transactional
-    public String construir(Integer idJugador, TipusConstruccio tipus, Integer posicio) {
+    public String construir(Integer idJugador, Construccio tipus, Integer posicio) {
         Jugador j = jugadorRepo.findById(idJugador).orElse(null);
         if (j == null) return "El jugador no existeix";
         Partida p = j.getPartida();

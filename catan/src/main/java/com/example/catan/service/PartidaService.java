@@ -98,12 +98,12 @@ public class PartidaService {
         }
 
         List<Terreny> terrenys = new ArrayList<>();
-        terrenys.addAll(Collections.nCopies(4, Terreny.BOSC));
-        terrenys.addAll(Collections.nCopies(4, Terreny.PASTURES));
-        terrenys.addAll(Collections.nCopies(4, Terreny.CAMPS));
-        terrenys.addAll(Collections.nCopies(3, Terreny.TURONS));
-        terrenys.addAll(Collections.nCopies(3, Terreny.MUNTANYES));
-        terrenys.add(Terreny.DESERT);
+        terrenys.addAll(Collections.nCopies(4, TipusTerreny.BOSC));
+        terrenys.addAll(Collections.nCopies(4, TipusTerreny.PASTURES));
+        terrenys.addAll(Collections.nCopies(4, TipusTerreny.CAMPS));
+        terrenys.addAll(Collections.nCopies(3, TipusTerreny.TURONS));
+        terrenys.addAll(Collections.nCopies(3, TipusTerreny.MUNTANYES));
+        terrenys.add(TipusTerreny.DESERT);
         Collections.shuffle(terrenys, random);
 
         List<Integer> numeros = new ArrayList<>(List.of(2, 3, 3, 4, 4, 5, 5, 6, 6, 8, 8, 9, 9, 10, 10, 11, 11, 12));
@@ -120,9 +120,9 @@ public class PartidaService {
             h.setQ(row.q());
             h.setR(row.r());
             h.setTerreny(terrenys.get(i));
-            h.setNumero(h.getTerreny() == Terreny.DESERT ? null : itNum.next());
+            h.setNumero(h.getTerreny() == TipusTerreny.DESERT ? null : itNum.next());
             h.setPartida(p);
-            if (h.getTerreny() == Terreny.DESERT) desert = h;
+            if (h.getTerreny() == TipusTerreny.DESERT) desert = h;
             hexPerCodi.put(h.getCodi(), h);
             hexagons.add(h);
         }

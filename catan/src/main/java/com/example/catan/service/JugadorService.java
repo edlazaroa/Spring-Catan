@@ -1,6 +1,6 @@
 package com.example.catan.service;
 
-import com.example.catan.dto.Dtos.JugadorRecursosDTO;
+import dto.JugadorRecursosDTO;
 import com.example.catan.model.*;
 import com.example.catan.repository.*;
 import org.springframework.stereotype.Service;
@@ -46,9 +46,6 @@ public class JugadorService {
         this.partidaService = partidaService;
     }
 
-    // =====================================================================
-    // GET /jugador/{id}/recursos  ->  Jugador.MostrarRecursos
-    // =====================================================================
     @Transactional(readOnly = true)
     public Optional<JugadorRecursosDTO> recursos(Integer idJugador) {
         return jugadorRepo.findById(idJugador).map(j -> new JugadorRecursosDTO(
@@ -56,9 +53,7 @@ public class JugadorService {
                 recursService.inventari(j.getId())));
     }
 
-    // =====================================================================
-    // POST /jugador/{id}/construir
-    // =====================================================================
+  
     @Transactional
     public String construir(Integer idJugador, Construccio tipus, Integer posicio) {
         Jugador j = jugadorRepo.findById(idJugador).orElse(null);
@@ -199,9 +194,7 @@ public class JugadorService {
         return guanyador == null ? "" : ". Partida finalitzada: guanya " + guanyador.getNom();
     }
 
-    // =====================================================================
-    // POST /jugador/{id}/passar  ->  Jugador.PassarTorn
-    // =====================================================================
+    
     @Transactional
     public String passarTorn(Integer idJugador) {
         Jugador j = jugadorRepo.findById(idJugador).orElse(null);

@@ -1,6 +1,6 @@
 package com.example.catan.service;
 
-import com.example.catan.dto.Dtos.*;
+import dto.*;
 import com.example.catan.model.*;
 import com.example.catan.repository.*;
 import com.example.catan.service.TopologiaLoader.*;
@@ -49,9 +49,7 @@ public class PartidaService {
         this.topologia = topologia;
     }
 
-    // =====================================================================
-    // POST /partida  ->  Partida.IniciarPartida
-    // =====================================================================
+    
     @Transactional
     public PartidaDTO iniciar(IniciarPartidaRequest req) {
         List<String> noms = req == null ? null : req.jugadors();
@@ -97,7 +95,7 @@ public class PartidaService {
                     + ", arestes=" + arestaRows.size());
         }
 
-        List<Terreny> terrenys = new ArrayList<>();
+        List<TipusTerreny> terrenys = new ArrayList<>();
         terrenys.addAll(Collections.nCopies(4, TipusTerreny.BOSC));
         terrenys.addAll(Collections.nCopies(4, TipusTerreny.PASTURES));
         terrenys.addAll(Collections.nCopies(4, TipusTerreny.CAMPS));
@@ -167,9 +165,7 @@ public class PartidaService {
         return toDto(p, jugadors, hexagons);
     }
 
-    // =====================================================================
-    // GET /partida/{id}/tauler  ->  Partida.MostrarTauler
-    // =====================================================================
+    
     @Transactional(readOnly = true)
     public List<HexagonTaulerDTO> tauler(Integer idPartida) {
         Partida p = trobar(idPartida);
@@ -200,9 +196,7 @@ public class PartidaService {
         return res;
     }
 
-    // =====================================================================
-    // POST /partida/{id}/daus  ->  Partida.TirarDaus
-    // =====================================================================
+   
     @Transactional
     public TiradaDTO tirarDaus(Integer idPartida) {
         Partida p = trobar(idPartida);
@@ -222,7 +216,6 @@ public class PartidaService {
         Map<Integer, Map<TipusRecurs, Integer>> rebut = new LinkedHashMap<>();
         for (Jugador j : jugadors) rebut.put(j.getId(), new EnumMap<>(TipusRecurs.class));
 
-        // Amb un 7 no hi ha produccio (el lladre es part avancada)
         if (tirada != 7) {
             Integer lladreId = p.getLladre() == null ? -1 : p.getLladre().getId();
             acumular(poblatRepo.produccio(idPartida, tirada, lladreId), 1, rebut);
@@ -246,15 +239,12 @@ public class PartidaService {
         }
     }
 
-    // =====================================================================
-    // Punts i victoria (Jugador.CalcularPunts / Partida.ComprovarVictoria)
-    // =====================================================================
+  
     @Transactional(readOnly = true)
     public int calcularPunts(Integer jugadorId) {
         return (int) poblatRepo.countByPropietariId(jugadorId) + 2 * (int) ciutatRepo.countByPropietariId(jugadorId);
     }
 
-    /** Si algun jugador arriba als punts necessaris, finalitza la partida. Torna el guanyador o null. */
     @Transactional
     public Jugador comprovarVictoria(Partida p) {
         Jugador millor = null;
@@ -275,9 +265,6 @@ public class PartidaService {
         return null;
     }
 
-    // =====================================================================
-    // Auxiliars
-    // =====================================================================
     private Partida trobar(Integer id) {
         return partidaRepo.findById(id)
                 .orElseThrow(() -> error(HttpStatus.NOT_FOUND, "La partida " + id + " no existeix"));

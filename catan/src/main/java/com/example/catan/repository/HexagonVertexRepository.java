@@ -9,12 +9,10 @@ import java.util.List;
 
 public interface HexagonVertexRepository extends JpaRepository<HexagonVertex, Integer> {
 
-    /** Tota la relacio hexagon-vertex d'una partida (per mostrar el tauler). */
     @Query("select hv from HexagonVertex hv join fetch hv.hexagon join fetch hv.vertex "
          + "where hv.hexagon.partida.id = :partida")
     List<HexagonVertex> findTaulerByPartida(@Param("partida") Integer partidaId);
 
-    /** Hexagons que toquen un vertex (per als recursos inicials). */
     @Query("select hv from HexagonVertex hv join fetch hv.hexagon where hv.vertex.id = :vertex")
     List<HexagonVertex> findByVertex(@Param("vertex") Integer vertexId);
 }

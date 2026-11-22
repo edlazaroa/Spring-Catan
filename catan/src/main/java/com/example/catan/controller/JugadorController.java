@@ -1,10 +1,16 @@
 package com.example.catan.controller;
 
-import dto.JugadorRecursosDTO;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.catan.dto.JugadorRecursosDTO;
 import com.example.catan.model.Construccio;
 import com.example.catan.service.JugadorService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/jugador")

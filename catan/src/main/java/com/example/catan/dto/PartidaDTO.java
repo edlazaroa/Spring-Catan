@@ -1,4 +1,4 @@
-package dto;
+package com.example.catan.dto;
 import java.util.List;
 
 import com.example.catan.model.EstatPartida;

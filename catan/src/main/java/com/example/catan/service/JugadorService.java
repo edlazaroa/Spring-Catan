@@ -1,12 +1,31 @@
 package com.example.catan.service;
 
-import dto.JugadorRecursosDTO;
-import com.example.catan.model.*;
-import com.example.catan.repository.*;
+import java.util.Optional;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import com.example.catan.dto.JugadorRecursosDTO;
+import com.example.catan.model.Aresta;
+import com.example.catan.model.Carretera;
+import com.example.catan.model.Ciutat;
+import com.example.catan.model.Construccio;
+import com.example.catan.model.EstatPartida;
+import com.example.catan.model.HexagonVertex;
+import com.example.catan.model.Jugador;
+import com.example.catan.model.Partida;
+import com.example.catan.model.Poblat;
+import com.example.catan.model.TipusRecurs;
+import com.example.catan.model.Vertex;
+import com.example.catan.repository.ArestaRepository;
+import com.example.catan.repository.AssentamentRepository;
+import com.example.catan.repository.CarreteraRepository;
+import com.example.catan.repository.CiutatRepository;
+import com.example.catan.repository.HexagonVertexRepository;
+import com.example.catan.repository.JugadorRepository;
+import com.example.catan.repository.PartidaRepository;
+import com.example.catan.repository.PoblatRepository;
+import com.example.catan.repository.VertexRepository;
 
 @Service
 public class JugadorService {

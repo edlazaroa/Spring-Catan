@@ -1,13 +1,14 @@
 package com.example.catan.service;
 
+import java.util.EnumMap;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
 import com.example.catan.model.Jugador;
 import com.example.catan.model.RecursJugador;
 import com.example.catan.model.TipusRecurs;
 import com.example.catan.repository.RecursJugadorRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.EnumMap;
-import java.util.Map;
 
 @Service
 public class RecursService {

@@ -1,4 +1,4 @@
-package dto;
+package com.example.catan.dto;
 import java.util.Map;
 
 import com.example.catan.model.TipusRecurs;

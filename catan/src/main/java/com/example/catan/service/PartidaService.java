@@ -1,16 +1,59 @@
 package com.example.catan.service;
 
-import dto.*;
-import com.example.catan.model.*;
-import com.example.catan.repository.*;
-import com.example.catan.service.TopologiaLoader.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import com.example.catan.dto.ConstruccioDTO;
+import com.example.catan.dto.HexagonDTO;
+import com.example.catan.dto.HexagonTaulerDTO;
+import com.example.catan.dto.IniciarPartidaRequest;
+import com.example.catan.dto.JugadorResum;
+import com.example.catan.dto.PartidaDTO;
+import com.example.catan.dto.RebutDTO;
+import com.example.catan.dto.TiradaDTO;
+import com.example.catan.model.Aresta;
+import com.example.catan.model.Assentament;
+import com.example.catan.model.Ciutat;
+import com.example.catan.model.ColorJugador;
+import com.example.catan.model.EstatPartida;
+import com.example.catan.model.Hexagon;
+import com.example.catan.model.HexagonVertex;
+import com.example.catan.model.Jugador;
+import com.example.catan.model.Partida;
+import com.example.catan.model.RecursJugador;
+import com.example.catan.model.TipusRecurs;
+import com.example.catan.model.TipusTerreny;
+import com.example.catan.model.Vertex;
+import com.example.catan.repository.ArestaRepository;
+import com.example.catan.repository.AssentamentRepository;
+import com.example.catan.repository.CiutatRepository;
+import com.example.catan.repository.HexagonRepository;
+import com.example.catan.repository.HexagonVertexRepository;
+import com.example.catan.repository.JugadorRepository;
+import com.example.catan.repository.PartidaRepository;
+import com.example.catan.repository.PoblatRepository;
+import com.example.catan.repository.RecursJugadorRepository;
+import com.example.catan.repository.VertexRepository;
+import com.example.catan.service.TopologiaLoader.ArestaRow;
+import com.example.catan.service.TopologiaLoader.HexRow;
+import com.example.catan.service.TopologiaLoader.HexVertexRow;
+import com.example.catan.service.TopologiaLoader.VertexRow;
+
+import dto.*;
 
 @Service
 public class PartidaService {

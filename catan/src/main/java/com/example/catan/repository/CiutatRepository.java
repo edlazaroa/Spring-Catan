@@ -1,19 +1,22 @@
 package com.example.catan.repository;
 
-import com.example.catan.model.Ciutat;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import com.example.catan.model.Ciutat;
 
 public interface CiutatRepository extends JpaRepository<Ciutat, Integer> {
 
-    long countByPropietariId(Integer jugadorId);
+    @Query("select count(c) from Ciutat c where c.jugador.jugador_id = :j")
+    long countByPropietariId(@Param("j") Integer j);
 
-    @Query("select c.propietari, hv.hexagon.terreny from Ciutat c, HexagonVertex hv "
-         + "where hv.vertex.id = c.vertex.id and hv.hexagon.partida.id = :partida "
-         + "and hv.hexagon.numero = :numero and hv.hexagon.id <> :lladre")
-    List<Object[]> produccio(@Param("partida") Integer partidaId, @Param("numero") Integer numero,
-                             @Param("lladre") Integer lladreId);
+    @Query("select c.jugador, hx.terreny from HexagonVertex hv join hv.hexagon hx "
+         + "join Ciutat c on c.vertex = hv.vertex "
+         + "where hx.partida.partida_id = :partida and hx.numero = :tirada "
+         + "and hx.hexagon_id <> :lladre")
+    List<Object[]> produccio(@Param("partida") Integer partida, @Param("tirada") Integer tirada,
+                             @Param("lladre") Integer lladre);
 }

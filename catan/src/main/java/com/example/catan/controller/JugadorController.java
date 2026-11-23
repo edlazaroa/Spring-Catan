@@ -7,9 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.example.catan.dto.JugadorRecursosDTO;
-import com.example.catan.model.Construccio;
+import com.example.catan.model.TipusConstruccio;
 import com.example.catan.service.JugadorService;
 
 @RestController
@@ -31,7 +30,7 @@ public class JugadorController {
 
     @PostMapping("/{idJugador}/construir")
     public String construir(@PathVariable("idJugador") Integer idJugador,
-                            @RequestParam("tipus") Construccio tipus,
+                            @RequestParam("tipus") TipusConstruccio tipus,
                             @RequestParam("posicio") Integer posicio) {
         return jugadorService.construir(idJugador, tipus, posicio);
     }

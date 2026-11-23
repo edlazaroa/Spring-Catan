@@ -30,7 +30,7 @@ public class Hexagon {
 	@Column(name = "terreny", nullable = false)
 	private TipusTerreny terreny;
 	
-	@Column(name = "numero", nullable = false)
+	@Column(name = "numero", nullable = true)
 	private Integer numero;
 	@Column(name = "q", nullable = false)
 	private Integer q;

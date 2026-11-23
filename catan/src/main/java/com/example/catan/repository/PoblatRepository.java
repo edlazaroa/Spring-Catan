@@ -1,27 +1,34 @@
 package com.example.catan.repository;
 
-import com.example.catan.model.Poblat;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.catan.model.Poblat;
 
 public interface PoblatRepository extends JpaRepository<Poblat, Integer> {
 
-    long countByPropietariId(Integer jugadorId);
+    @Query("select count(p) from Poblat p where p.jugador.jugador_id = :j")
+    long countByPropietariId(@Param("j") Integer j);
 
-    Optional<Poblat> findByVertexIdAndPropietariId(Integer vertexId, Integer jugadorId);
+    @Query("select p from Poblat p where p.vertex.vertex_id = :v and p.jugador.jugador_id = :j")
+    Optional<Poblat> findByVertexIdAndPropietariId(@Param("v") Integer v, @Param("j") Integer j);
 
-    @Query("select count(p) from Poblat p where p.propietari.id = :j and p.vertex.id in (:va, :vb) "
-         + "and not exists (select c.id from Carretera c where c.propietari.id = :j "
-         + "and (c.aresta.vertexA.id = p.vertex.id or c.aresta.vertexB.id = p.vertex.id))")
-    long countSenseCarretera(@Param("j") Integer jugadorId, @Param("va") Integer va, @Param("vb") Integer vb);
+    /** Poblats del jugador a va/vb sense cap carretera propia adjacent (PREPARACIO). */
+    @Query("select count(p) from Poblat p where p.jugador.jugador_id = :j "
+         + "and p.vertex.vertex_id in (:va, :vb) "
+         + "and not exists (select 1 from Carretera c where c.jugador = p.jugador "
+         + "and (c.aresta.vertexA = p.vertex or c.aresta.vertexB = p.vertex))")
+    long countSenseCarretera(@Param("j") Integer j, @Param("va") Integer va, @Param("vb") Integer vb);
 
-    @Query("select p.propietari, hv.hexagon.terreny from Poblat p, HexagonVertex hv "
-         + "where hv.vertex.id = p.vertex.id and hv.hexagon.partida.id = :partida "
-         + "and hv.hexagon.numero = :numero and hv.hexagon.id <> :lladre")
-    List<Object[]> produccio(@Param("partida") Integer partidaId, @Param("numero") Integer numero,
-                             @Param("lladre") Integer lladreId);
+    /** Files [Jugador, TipusTerreny] dels poblats adjacents a hexagons amb aquest numero i sense lladre. */
+    @Query("select p.jugador, hx.terreny from HexagonVertex hv join hv.hexagon hx "
+         + "join Poblat p on p.vertex = hv.vertex "
+         + "where hx.partida.partida_id = :partida and hx.numero = :tirada "
+         + "and hx.hexagon_id <> :lladre")
+    List<Object[]> produccio(@Param("partida") Integer partida, @Param("tirada") Integer tirada,
+                             @Param("lladre") Integer lladre);
 }

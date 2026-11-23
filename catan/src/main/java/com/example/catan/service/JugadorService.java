@@ -9,12 +9,12 @@ import com.example.catan.dto.JugadorRecursosDTO;
 import com.example.catan.model.Aresta;
 import com.example.catan.model.Carretera;
 import com.example.catan.model.Ciutat;
-import com.example.catan.model.Construccio;
 import com.example.catan.model.EstatPartida;
 import com.example.catan.model.HexagonVertex;
 import com.example.catan.model.Jugador;
 import com.example.catan.model.Partida;
 import com.example.catan.model.Poblat;
+import com.example.catan.model.TipusConstruccio;
 import com.example.catan.model.TipusRecurs;
 import com.example.catan.model.Vertex;
 import com.example.catan.repository.ArestaRepository;
@@ -72,9 +72,8 @@ public class JugadorService {
                 recursService.inventari(j.getId())));
     }
 
-  
     @Transactional
-    public String construir(Integer idJugador, Construccio tipus, Integer posicio) {
+    public String construir(Integer idJugador, TipusConstruccio tipus, Integer posicio) {
         Jugador j = jugadorRepo.findById(idJugador).orElse(null);
         if (j == null) return "El jugador no existeix";
         Partida p = j.getPartida();
@@ -82,7 +81,7 @@ public class JugadorService {
         if (p.getEstat() == EstatPartida.FINALITZADA) {
             return "La partida no està en curs";
         }
-        if (p.getJugadorActiu() == null || !p.getJugadorActiu().getId().equals(j.getId())) {
+        if (p.getActiu() == null || !p.getActiu().getId().equals(j.getId())) {
             return "No és el teu torn";
         }
         boolean preparacio = p.getEstat() == EstatPartida.PREPARACIO;
@@ -104,10 +103,12 @@ public class JugadorService {
         Aresta a = arestaRepo.findById(posicio).orElse(null);
         if (a == null) return "L'aresta no existeix";
         if (!a.getPartida().getId().equals(p.getId())) return "Posició d'una altra partida";
-        if (carreteraRepo.existsByArestaId(a.getId())) return "Posició ocupada: ja hi ha una carretera en aquesta aresta";
+        if (carreteraRepo.existsByArestaId(a.getAresta_id())) {
+            return "Posició ocupada: ja hi ha una carretera en aquesta aresta";
+        }
 
-        Integer va = a.getVertexA().getId();
-        Integer vb = a.getVertexB().getId();
+        Integer va = a.getVertexA().getVertex_id();
+        Integer vb = a.getVertexB().getVertex_id();
         long carreteres = carreteraRepo.countByPropietariId(j.getId());
 
         if (preparacio) {
@@ -126,28 +127,30 @@ public class JugadorService {
                     && carreteraRepo.countConnectades(j.getId(), va, vb) == 0) {
                 return "No connectat: l'aresta ha de tocar una construcció o carretera teva";
             }
-            if (!recursService.pot(j, RecursService.COST_CARRETERA)) {
-                return "Sense recursos: una carretera costa 1 FUSTA + 1 MAO";
-            }
             if (carreteres >= MAX_CARRETERES) {
                 return "Límit assolit: màxim " + MAX_CARRETERES + " carreteres";
+            }
+            if (!recursService.pot(j, RecursService.COST_CARRETERA)) {
+                return "Sense recursos: una carretera costa 1 FUSTA + 1 MAO";
             }
             recursService.pagar(j, RecursService.COST_CARRETERA);
         }
 
         Carretera c = new Carretera();
-        c.setPropietari(j);
+        c.setJugador(j);                
         c.setAresta(a);
         carreteraRepo.save(c);
-        return "Carretera construïda a l'aresta " + a.getId();
+        return "Carretera construïda a l'aresta " + a.getAresta_id();
     }
 
     private String construirPoblat(Jugador j, Partida p, Integer posicio, boolean preparacio) {
         Vertex v = vertexRepo.findById(posicio).orElse(null);
         if (v == null) return "El vèrtex no existeix";
         if (!v.getPartida().getId().equals(p.getId())) return "Posició d'una altra partida";
-        if (assentRepo.existsByVertexId(v.getId())) return "Posició ocupada: ja hi ha un assentament en aquest vèrtex";
-        if (assentRepo.countAdjacents(v.getId()) > 0) {
+        if (assentRepo.existsByVertexId(v.getVertex_id())) {
+            return "Posició ocupada: ja hi ha un assentament en aquest vèrtex";
+        }
+        if (assentRepo.countAdjacents(v.getVertex_id()) > 0) {
             return "Regla de la distància: hi ha una construcció en un vèrtex adjacent";
         }
 
@@ -157,30 +160,30 @@ public class JugadorService {
                 return "Límit assolit: ja has col·locat el poblat d'aquest torn";
             }
         } else {
-            if (carreteraRepo.countAlVertex(j.getId(), v.getId()) == 0) {
+            if (carreteraRepo.countAlVertex(j.getId(), v.getVertex_id()) == 0) {
                 return "No connectat: el vèrtex ha de tenir una carretera teva";
-            }
-            if (!recursService.pot(j, RecursService.COST_POBLAT)) {
-                return "Sense recursos: un poblat costa 1 FUSTA + 1 MAO + 1 LLANA + 1 BLAT";
             }
             if (poblats >= MAX_POBLATS) {
                 return "Límit assolit: màxim " + MAX_POBLATS + " poblats";
+            }
+            if (!recursService.pot(j, RecursService.COST_POBLAT)) {
+                return "Sense recursos: un poblat costa 1 FUSTA + 1 MAO + 1 LLANA + 1 BLAT";
             }
             recursService.pagar(j, RecursService.COST_POBLAT);
         }
 
         Poblat poblat = new Poblat();
-        poblat.setPropietari(j);
+        poblat.setJugador(j);
         poblat.setVertex(v);
         poblatRepo.save(poblat);
 
         if (preparacio && poblats + 1 == 2) {
-            for (HexagonVertex hv : hvRepo.findByVertex(v.getId())) {
-                TipusRecurs r = hv.getHexagon().getTerreny().getRecurs();
+            for (HexagonVertex hv : hvRepo.findByVertex(v.getVertex_id())) {
+                TipusRecurs r = RecursService.recursDe(hv.getHexagon().getTerreny());
                 if (r != null) recursService.afegir(j, r, 1);
             }
         }
-        return "Poblat construït al vèrtex " + v.getId() + victoria(p);
+        return "Poblat construït al vèrtex " + v.getVertex_id() + victoria(p);
     }
 
     private String millorarACiutat(Jugador j, Partida p, Integer posicio, boolean preparacio) {
@@ -189,23 +192,22 @@ public class JugadorService {
         if (!v.getPartida().getId().equals(p.getId())) return "Posició d'una altra partida";
         if (preparacio) return "No es pot millorar a ciutat durant la preparació de la partida";
 
-        Poblat poblat = poblatRepo.findByVertexIdAndPropietariId(v.getId(), j.getId()).orElse(null);
+        Poblat poblat = poblatRepo.findByVertexIdAndPropietariId(v.getVertex_id(), j.getId()).orElse(null);
         if (poblat == null) return "No hi ha cap poblat teu per millorar en aquest vèrtex";
-        if (!recursService.pot(j, RecursService.COST_CIUTAT)) {
-            return "Sense recursos: una ciutat costa 2 BLAT + 3 MINERAL";
-        }
         if (ciutatRepo.countByPropietariId(j.getId()) >= MAX_CIUTATS) {
             return "Límit assolit: màxim " + MAX_CIUTATS + " ciutats";
         }
+        if (!recursService.pot(j, RecursService.COST_CIUTAT)) {
+            return "Sense recursos: una ciutat costa 2 BLAT + 3 MINERAL";
+        }
         recursService.pagar(j, RecursService.COST_CIUTAT);
-
         poblatRepo.delete(poblat);
         poblatRepo.flush();
         Ciutat ciutat = new Ciutat();
-        ciutat.setPropietari(j);
+        ciutat.setJugador(j);
         ciutat.setVertex(v);
         ciutatRepo.save(ciutat);
-        return "Ciutat construïda al vèrtex " + v.getId() + victoria(p);
+        return "Ciutat construïda al vèrtex " + v.getVertex_id() + victoria(p);
     }
 
     private String victoria(Partida p) {
@@ -213,7 +215,6 @@ public class JugadorService {
         return guanyador == null ? "" : ". Partida finalitzada: guanya " + guanyador.getNom();
     }
 
-    
     @Transactional
     public String passarTorn(Integer idJugador) {
         Jugador j = jugadorRepo.findById(idJugador).orElse(null);
@@ -221,7 +222,7 @@ public class JugadorService {
         Partida p = j.getPartida();
 
         if (p.getEstat() == EstatPartida.FINALITZADA) return "La partida no està en curs";
-        if (p.getJugadorActiu() == null || !p.getJugadorActiu().getId().equals(j.getId())) {
+        if (p.getActiu() == null || !p.getActiu().getId().equals(j.getId())) {
             return "No és el teu torn";
         }
 
@@ -240,7 +241,7 @@ public class JugadorService {
                 if (ordre < n) {
                     seguent = ordre + 1;
                 } else {
-                    p.setRonda(2);
+                    p.setRonda(2);         
                     seguent = ordre;
                 }
             } else if (ordre > 1) {
@@ -259,7 +260,7 @@ public class JugadorService {
         }
 
         Jugador proper = jugadorRepo.findByPartidaIdAndOrdreTorn(p.getId(), seguent).orElseThrow();
-        p.setJugadorActiu(proper);
+        p.setActiu(proper);
         p.setDausTirats(false);
         partidaRepo.save(p);
         return "Torn passat. Ara juga " + proper.getNom() + " (ronda " + p.getRonda() + ")" + extra;

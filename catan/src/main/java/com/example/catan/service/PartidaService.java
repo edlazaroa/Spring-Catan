@@ -1,5 +1,6 @@
 package com.example.catan.service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -34,7 +35,6 @@ import com.example.catan.model.Hexagon;
 import com.example.catan.model.HexagonVertex;
 import com.example.catan.model.Jugador;
 import com.example.catan.model.Partida;
-import com.example.catan.model.RecursJugador;
 import com.example.catan.model.TipusRecurs;
 import com.example.catan.model.TipusTerreny;
 import com.example.catan.model.Vertex;
@@ -52,8 +52,6 @@ import com.example.catan.service.TopologiaLoader.ArestaRow;
 import com.example.catan.service.TopologiaLoader.HexRow;
 import com.example.catan.service.TopologiaLoader.HexVertexRow;
 import com.example.catan.service.TopologiaLoader.VertexRow;
-
-import dto.*;
 
 @Service
 public class PartidaService {
@@ -92,7 +90,6 @@ public class PartidaService {
         this.topologia = topologia;
     }
 
-    
     @Transactional
     public PartidaDTO iniciar(IniciarPartidaRequest req) {
         List<String> noms = req == null ? null : req.jugadors();
@@ -110,7 +107,13 @@ public class PartidaService {
         }
 
         Partida p = new Partida();
+        p.setEstat(EstatPartida.PREPARACIO);
+        p.setDataInici(java.sql.Date.valueOf(LocalDate.now()));
+        p.setRonda(1);
+        p.setUltimaTirada(0);
         p.setPuntsPerGuanyar(punts);
+        p.setDausTirats(false);
+        p.setLladrePendent(false);
         partidaRepo.save(p);
 
         List<String> ordre = new ArrayList<>(noms);
@@ -122,9 +125,10 @@ public class PartidaService {
             j.setNom(ordre.get(i).trim());
             j.setColor(colors[i]);
             j.setOrdreTorn(i + 1);
+            j.setCavallersJugats(0);         
             j.setPartida(p);
             jugadorRepo.save(j);
-            for (TipusRecurs t : TipusRecurs.values()) recursRepo.save(new RecursJugador(j, t, 0));
+            for (TipusRecurs t : TipusRecurs.values()) recursRepo.save(recursService.crear(j, t));
             jugadors.add(j);
         }
 
@@ -173,8 +177,6 @@ public class PartidaService {
         for (VertexRow row : vertexRows) {
             Vertex v = new Vertex();
             v.setCodi(row.codi());
-            v.setX(row.x());
-            v.setY(row.y());
             v.setPartida(p);
             vertexPerCodi.put(v.getCodi(), v);
         }
@@ -201,45 +203,46 @@ public class PartidaService {
         }
         arestaRepo.saveAll(arestes);
 
-        p.setLladre(desert);
-        p.setJugadorActiu(jugadors.get(0));
+        p.setLladreId(desert);                 
+        p.setActiu(jugadors.get(0));           
         partidaRepo.save(p);
 
         return toDto(p, jugadors, hexagons);
     }
 
-    
     @Transactional(readOnly = true)
     public List<HexagonTaulerDTO> tauler(Integer idPartida) {
         Partida p = trobar(idPartida);
-        Integer lladreId = p.getLladre() == null ? null : p.getLladre().getId();
+        Integer lladreId = p.getLladreId() == null ? null : p.getLladreId().getHexagon_id();
 
         Map<Integer, Assentament> perVertex = new HashMap<>();
-        for (Assentament a : assentRepo.findByPartida(idPartida)) perVertex.put(a.getVertex().getId(), a);
+        for (Assentament a : assentRepo.findByPartida(idPartida)) {
+            perVertex.put(a.getVertex().getVertex_id(), a);
+        }
 
         Map<Integer, List<HexagonVertex>> hvPerHex = hvRepo.findTaulerByPartida(idPartida).stream()
-                .collect(Collectors.groupingBy(hv -> hv.getHexagon().getId()));
+                .collect(Collectors.groupingBy(hv -> hv.getHexagon().getHexagon_id()));
 
         List<HexagonTaulerDTO> res = new ArrayList<>();
         for (Hexagon h : hexRepo.findByPartidaIdOrderByCodi(idPartida)) {
             List<ConstruccioDTO> construccions = new ArrayList<>();
-            hvPerHex.getOrDefault(h.getId(), List.of()).stream()
+            hvPerHex.getOrDefault(h.getHexagon_id(), List.of()).stream()
                     .sorted(Comparator.comparingInt(HexagonVertex::getPosicio))
                     .forEach(hv -> {
-                        Assentament a = perVertex.get(hv.getVertex().getId());
+                        Assentament a = perVertex.get(hv.getVertex().getVertex_id());
                         if (a != null) {
-                            construccions.add(new ConstruccioDTO(hv.getVertex().getId(), hv.getVertex().getCodi(),
+                            construccions.add(new ConstruccioDTO(hv.getVertex().getVertex_id(),
+                                    hv.getVertex().getCodi(),
                                     a instanceof Ciutat ? "CIUTAT" : "POBLAT",
-                                    a.getPropietari().getId(), a.getPropietari().getNom()));
+                                    a.getJugador().getId(), a.getJugador().getNom()));
                         }
                     });
-            res.add(new HexagonTaulerDTO(h.getId(), h.getCodi(), h.getTerreny(), h.getNumero(),
-                    h.getId().equals(lladreId), construccions));
+            res.add(new HexagonTaulerDTO(h.getHexagon_id(), h.getCodi(), h.getTerreny(), h.getNumero(),
+                    h.getHexagon_id().equals(lladreId), construccions));
         }
         return res;
     }
 
-   
     @Transactional
     public TiradaDTO tirarDaus(Integer idPartida) {
         Partida p = trobar(idPartida);
@@ -260,9 +263,9 @@ public class PartidaService {
         for (Jugador j : jugadors) rebut.put(j.getId(), new EnumMap<>(TipusRecurs.class));
 
         if (tirada != 7) {
-            Integer lladreId = p.getLladre() == null ? -1 : p.getLladre().getId();
-            acumular(poblatRepo.produccio(idPartida, tirada, lladreId), 1, rebut);
-            acumular(ciutatRepo.produccio(idPartida, tirada, lladreId), 2, rebut);
+            Integer lladreIdProd = p.getLladreId() == null ? -1 : p.getLladreId().getHexagon_id();
+            acumular(poblatRepo.produccio(idPartida, tirada, lladreIdProd), 1, rebut);
+            acumular(ciutatRepo.produccio(idPartida, tirada, lladreIdProd), 2, rebut);
         }
 
         List<RebutDTO> resum = new ArrayList<>();
@@ -277,12 +280,11 @@ public class PartidaService {
     private void acumular(List<Object[]> files, int quantitat, Map<Integer, Map<TipusRecurs, Integer>> rebut) {
         for (Object[] f : files) {
             Jugador propietari = (Jugador) f[0];
-            TipusRecurs recurs = ((Terreny) f[1]).getRecurs();
+            TipusRecurs recurs = RecursService.recursDe((TipusTerreny) f[1]);
             if (recurs != null) rebut.get(propietari.getId()).merge(recurs, quantitat, Integer::sum);
         }
     }
 
-  
     @Transactional(readOnly = true)
     public int calcularPunts(Integer jugadorId) {
         return (int) poblatRepo.countByPropietariId(jugadorId) + 2 * (int) ciutatRepo.countByPropietariId(jugadorId);
@@ -301,7 +303,7 @@ public class PartidaService {
         }
         if (millor != null && maxPunts >= p.getPuntsPerGuanyar()) {
             p.setEstat(EstatPartida.FINALITZADA);
-            p.setGuanyador(millor);
+            p.setGuanyadorId(millor);
             partidaRepo.save(p);
             return millor;
         }
@@ -327,11 +329,11 @@ public class PartidaService {
     }
 
     private PartidaDTO toDto(Partida p, List<Jugador> jugadors, List<Hexagon> hexagons) {
-        Integer lladreId = p.getLladre() == null ? null : p.getLladre().getId();
+        Integer lladreId = p.getLladreId() == null ? null : p.getLladreId().getHexagon_id();
         return new PartidaDTO(p.getId(), p.getEstat(), p.getRonda(), p.getPuntsPerGuanyar(),
-                p.getUltimaTirada(), resum(p.getJugadorActiu()),
+                p.getUltimaTirada(), resum(p.getActiu()),
                 jugadors.stream().map(this::resum).toList(),
-                hexagons.stream().map(h -> new HexagonDTO(h.getId(), h.getCodi(), h.getTerreny(),
-                        h.getNumero(), h.getId().equals(lladreId))).toList());
+                hexagons.stream().map(h -> new HexagonDTO(h.getHexagon_id(), h.getCodi(), h.getTerreny(),
+                        h.getNumero(), h.getHexagon_id().equals(lladreId))).toList());
     }
 }
